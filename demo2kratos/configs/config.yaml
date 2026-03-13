@@ -5,7 +5,8 @@ server:
   grpc:
     address: 0.0.0.0:9002
     timeout: 1s
+  auto_run: true
 data:
   database:
-    driver: sqlite3
-    source: file:db-E301BDE1-84F2-4C39-A75D-90648C2F241B?mode=memory&cache=shared
+    driver: sqlite
+    source: ./bin/demo2kratos.db
