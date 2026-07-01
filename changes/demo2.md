@@ -16,21 +16,22 @@ Code differences compared to source project.
 ## cmd/demo2kratos/main.go (+33 -16)
 
 ```diff
-@@ -1,19 +1,22 @@
+@@ -1,20 +1,23 @@
  package main
  
  import (
 -	"flag"
 +	"fmt"
+ 	"log/slog"
  	"os"
  
- 	"github.com/go-kratos/kratos/v2"
--	"github.com/go-kratos/kratos/v2/config"
--	"github.com/go-kratos/kratos/v2/config/file"
- 	"github.com/go-kratos/kratos/v2/log"
- 	"github.com/go-kratos/kratos/v2/middleware/tracing"
- 	"github.com/go-kratos/kratos/v2/transport/grpc"
- 	"github.com/go-kratos/kratos/v2/transport/http"
+ 	"github.com/go-kratos/kratos/contrib/otel/v3/tracing"
+ 	"github.com/go-kratos/kratos/v3"
+-	"github.com/go-kratos/kratos/v3/config"
+-	"github.com/go-kratos/kratos/v3/config/file"
+ 	"github.com/go-kratos/kratos/v3/log"
+ 	"github.com/go-kratos/kratos/v3/transport/grpc"
+ 	"github.com/go-kratos/kratos/v3/transport/http"
 +	"github.com/spf13/cobra"
  	"github.com/yylego/done"
 +	"github.com/yylego/kratos-examples/demo2kratos/cmd/demo2kratos/cfgpath"
@@ -40,9 +41,9 @@ Code differences compared to source project.
  	"github.com/yylego/must"
 +	"github.com/yylego/must/mustslice"
  	"github.com/yylego/rese"
- )
  
-@@ -23,12 +26,10 @@
+ 	_ "go.uber.org/automaxprocs"
+@@ -26,12 +29,10 @@
  	Name string
  	// Version is the version of the compiled software.
  	Version string
@@ -55,19 +56,19 @@ Code differences compared to source project.
 +	fmt.Println("service-name:", Name)
  }
  
- func newApp(logger log.Logger, gs *grpc.Server, hs *http.Server) *kratos.App {
-@@ -46,7 +47,6 @@
+ func newApp(logger *slog.Logger, gs *grpc.Server, hs *http.Server) *kratos.App {
+@@ -49,7 +50,6 @@
  }
  
  func main() {
 -	flag.Parse()
- 	logger := log.With(log.NewStdLogger(os.Stdout),
- 		"ts", log.DefaultTimestamp,
- 		"caller", log.DefaultCaller,
-@@ -56,18 +56,35 @@
- 		"trace.id", tracing.TraceID(),
- 		"span.id", tracing.SpanID(),
+ 	logger := log.NewLogger(
+ 		slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+ 			AddSource: true,
+@@ -62,18 +62,35 @@
+ 		slog.String("service.version", Version),
  	)
+ 	log.SetDefault(logger)
 -	c := config.New(
 -		config.WithSource(
 -			file.NewSource(flagconf),
@@ -105,7 +106,7 @@ Code differences compared to source project.
 +	must.Done(rootCmd.Execute())
 +}
 +
-+func runApp(cfg *conf.Bootstrap, logger log.Logger) {
++func runApp(cfg *conf.Bootstrap, logger *slog.Logger) {
  	app, cleanup := rese.V2(wireApp(cfg.Server, cfg.Data, logger))
  	defer cleanup()
  
@@ -118,7 +119,8 @@ Code differences compared to source project.
 +package subcmds
 +
 +import (
-+	"github.com/go-kratos/kratos/v2/log"
++	"log/slog"
++
 +	"github.com/golang-migrate/migrate/v4"
 +	sqlite3migrate "github.com/golang-migrate/migrate/v4/database/sqlite3"
 +	"github.com/spf13/cobra"
@@ -139,13 +141,12 @@ Code differences compared to source project.
 +
 +// NewVersionCmd creates version command
 +// 创建版本命令
-+func NewVersionCmd(serviceName, version string, logger log.Logger) *cobra.Command {
++func NewVersionCmd(serviceName, version string, logger *slog.Logger) *cobra.Command {
 +	return &cobra.Command{
 +		Use:   "version",
 +		Short: "Print version info",
 +		Run: func(cmd *cobra.Command, args []string) {
-+			slog := log.NewHelper(logger)
-+			slog.Infof("service-name: %s version: %s", serviceName, version)
++			logger.Info("version info", "service-name", serviceName, "version", version)
 +		},
 +	}
 +}
@@ -183,7 +184,7 @@ Code differences compared to source project.
 +// Note: Use caution with rollback operations to avoid unintended destructive actions
 +// 注意: 回退操作要谨慎，避免误操作导致问题
 +// ./bin/demo2kratos migrate migrate dec (use with caution)
-+func NewMigrateCmd(logger log.Logger) *cobra.Command {
++func NewMigrateCmd(logger *slog.Logger) *cobra.Command {
 +	var debugMode bool
 +
 +	var rootCmd = &cobra.Command{
@@ -235,6 +236,24 @@ Code differences compared to source project.
 +}
 ```
 
+## cmd/demo2kratos/wire_gen.go (+1 -5)
+
+```diff
+@@ -28,11 +28,7 @@
+ 	if err != nil {
+ 		return nil, nil, err
+ 	}
+-	articleUsecase, err := biz.NewArticleUsecase(dataData, logger)
+-	if err != nil {
+-		cleanup()
+-		return nil, nil, err
+-	}
++	articleUsecase := biz.NewArticleUsecase(dataData, logger)
+ 	articleService := service.NewArticleService(articleUsecase)
+ 	grpcServer := server.NewGRPCServer(confServer, articleService, logger)
+ 	httpServer := server.NewHTTPServer(confServer, articleService, logger)
+```
+
 ## configs/config.yaml (+3 -2)
 
 ```diff
@@ -245,35 +264,86 @@ Code differences compared to source project.
 +  auto_run: true
  data:
    database:
--    driver: sqlite3
--    source: file:db-E301BDE1-84F2-4C39-A75D-90648C2F241B?mode=memory&cache=shared
+-    driver: postgres
+-    source: host=localhost port=5432 user=postgres password=123 dbname=kratos_examples_db sslmode=disable
 +    driver: sqlite
 +    source: ./bin/demo2kratos.db
 ```
 
-## internal/biz/article.go (+36 -4)
+## internal/biz/article.go (+47 -144)
 
 ```diff
-@@ -4,10 +4,13 @@
- 	"context"
+@@ -2,195 +2,98 @@
  
- 	"github.com/brianvoe/gofakeit/v7"
-+	"github.com/go-kratos/kratos/v2/errors"
- 	"github.com/go-kratos/kratos/v2/log"
+ import (
+ 	"context"
+-	"errors"
+ 	"log/slog"
+ 
++	"github.com/brianvoe/gofakeit/v7"
++	"github.com/go-kratos/kratos/v3/errors"
  	"github.com/yylego/kratos-ebz/ebzkratos"
  	pb "github.com/yylego/kratos-examples/demo2kratos/api/article"
  	"github.com/yylego/kratos-examples/demo2kratos/internal/data"
+-	"github.com/yylego/must"
 +	"github.com/yylego/kratos-examples/demo2kratos/internal/pkg/models"
-+	"gorm.io/gorm"
+ 	"gorm.io/gorm"
+-	"gorm.io/gorm/clause"
  )
  
+-// Article is the GORM type mapped to the "articles" table. This service owns
+-// the table; demo1kratos keeps a duplicate of it just to cascade-delete a
+-// student's articles (the two services share one database).
+-//
+-// Article 是映射到 articles 表的 GORM 模型，本服务是这张表的归属方；
+-// demo1kratos 里有一份镜像，仅用于删学生时顺带删文章（两服务共用一个库）
  type Article struct {
-@@ -27,10 +30,30 @@
+-	ID        int64  `gorm:"primaryKey;autoIncrement"`
+-	Title     string `gorm:"size:256;not null"`
+-	Content   string `gorm:"type:text"`
+-	StudentID int64  `gorm:"index"`
++	ID        int64
++	Title     string
++	Content   string
++	StudentID int64
+ }
+ 
+-func (Article) TableName() string { return "articles" }
+-
+ type ArticleUsecase struct {
+ 	data *data.Data
+-	slog *slog.Logger
++	log  *slog.Logger
+ }
+ 
+-func NewArticleUsecase(data *data.Data, logger *slog.Logger) (*ArticleUsecase, error) {
+-	// Migrate the owned table plus the mirrored students table (needed in the
+-	// existence check); both services share one database
+-	// 建好本服务拥有的 articles 表，外加镜像的 students 表（供存在性校验用）
+-	if err := data.DB().AutoMigrate(&Article{}, &Student{}); err != nil {
+-		return nil, err
+-	}
+-	return &ArticleUsecase{data: data, slog: logger}, nil
++func NewArticleUsecase(data *data.Data, logger *slog.Logger) *ArticleUsecase {
++	return &ArticleUsecase{data: data, log: logger}
  }
  
  func (uc *ArticleUsecase) CreateArticle(ctx context.Context, a *Article) (*Article, *ebzkratos.Ebz) {
+-	must.Nice(a.Title)
+-	must.True(a.StudentID > 0)
 +	db := uc.data.DB()
-+
+ 
+-	// Lock the student row and insert the article in one transaction: the FOR
+-	// SHARE lock blocks a concurrent DeleteStudent (which takes FOR UPDATE) from
+-	// removing this student before we commit, so we cannot end up with an article
+-	// pointing at a student that's being deleted.
+-	// 在一个事务里锁住学生行再插入文章：FOR SHARE 锁会挡住并发的 DeleteStudent
+-	// （它持 FOR UPDATE）在本事务提交前删除该学生，从而绝不会创建出指向
+-	// "正在被删除的学生"的文章
+-	res := &Article{Title: a.Title, Content: a.Content, StudentID: a.StudentID}
+-	err := uc.data.DB().WithContext(ctx).Transaction(func(db *gorm.DB) error {
+-		var student Student
+-		if err := db.Clauses(clause.Locking{Strength: clause.LockingStrengthShare}).First(&student, a.StudentID).Error; err != nil {
 +	// Use GORM transaction to save article
 +	// 使用 GORM 事务保存文章
 +	err := db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
@@ -281,41 +351,110 @@ Code differences compared to source project.
 +			Message: a.Title,
 +		}
 +		if err := tx.Create(record).Error; err != nil {
-+			return err
-+		}
+ 			return err
+ 		}
+-		return db.Create(res).Error
 +		a.ID = int64(record.ID)
 +		return nil
-+	})
-+	if err != nil {
+ 	})
+ 	if err != nil {
+-		if errors.Is(err, gorm.ErrRecordNotFound) {
+-			return nil, ebzkratos.New(pb.ErrorBadParam("student %d does not exist", a.StudentID))
+-		}
+-		return nil, ebzkratos.New(pb.ErrorArticleCreateFailure("create article: %v", err))
 +		return nil, ebzkratos.New(pb.ErrorArticleCreateFailure("db: %v", err))
-+	}
-+
- 	var res Article
- 	if err := gofakeit.Struct(&res); err != nil {
- 		return nil, ebzkratos.New(pb.ErrorArticleCreateFailure("fake: %v", err))
  	}
+-	uc.slog.InfoContext(ctx, "created article", "id", res.ID, "student_id", res.StudentID)
+-	return res, nil
++
++	var res Article
++	if err := gofakeit.Struct(&res); err != nil {
++		return nil, ebzkratos.New(pb.ErrorArticleCreateFailure("fake: %v", err))
++	}
 +	res.ID = a.ID
 +	res.Title = a.Title
- 	return &res, nil
++	return &res, nil
  }
  
-@@ -47,11 +70,20 @@
+ func (uc *ArticleUsecase) UpdateArticle(ctx context.Context, a *Article) (*Article, *ebzkratos.Ebz) {
+-	must.True(a.ID > 0)
+-	must.Nice(a.Title)
+-	must.True(a.StudentID > 0)
+-
+-	// Same transaction + FOR SHARE lock as CreateArticle: the (new) owning
+-	// student cannot be deleted while we re-point the article.
+-	// 与 CreateArticle 相同的事务 + FOR SHARE 锁：改文章归属期间，新归属的学生不会被并发删除
+-	res := &Article{ID: a.ID}
+-	var studentMissing, articleMissing bool
+-	err := uc.data.DB().WithContext(ctx).Transaction(func(db *gorm.DB) error {
+-		var student Student
+-		if err := db.Clauses(clause.Locking{Strength: clause.LockingStrengthShare}).First(&student, a.StudentID).Error; err != nil {
+-			if errors.Is(err, gorm.ErrRecordNotFound) {
+-				studentMissing = true
+-				return nil
+-			}
+-			return err
+-		}
+-		upd := db.Model(res).Updates(map[string]any{
+-			"title":      a.Title,
+-			"content":    a.Content,
+-			"student_id": a.StudentID,
+-		})
+-		if upd.Error != nil {
+-			return upd.Error
+-		}
+-		if upd.RowsAffected == 0 {
+-			articleMissing = true
+-			return nil
+-		}
+-		return db.First(res, a.ID).Error
+-	})
+-	if err != nil {
+-		return nil, ebzkratos.New(pb.ErrorDbError("update article: %v", err))
++	var res Article
++	if err := gofakeit.Struct(&res); err != nil {
++		return nil, ebzkratos.New(pb.ErrorServerError("fake: %v", err))
+ 	}
+-	if studentMissing {
+-		return nil, ebzkratos.New(pb.ErrorBadParam("student %d does not exist", a.StudentID))
+-	}
+-	if articleMissing {
+-		return nil, ebzkratos.New(pb.ErrorArticleNotFound("article %d not found", a.ID))
+-	}
+-	return res, nil
++	return &res, nil
+ }
+ 
+ func (uc *ArticleUsecase) DeleteArticle(ctx context.Context, id int64) *ebzkratos.Ebz {
+-	must.True(id > 0)
+-
+-	del := uc.data.DB().WithContext(ctx).Delete(&Article{}, id)
+-	if del.Error != nil {
+-		return ebzkratos.New(pb.ErrorDbError("delete article: %v", del.Error))
+-	}
+-	if del.RowsAffected == 0 {
+-		return ebzkratos.New(pb.ErrorArticleNotFound("article %d not found", id))
+-	}
+-	uc.slog.InfoContext(ctx, "deleted article", "id", id)
+ 	return nil
  }
  
  func (uc *ArticleUsecase) GetArticle(ctx context.Context, id int64) (*Article, *ebzkratos.Ebz) {
--	var res Article
--	if err := gofakeit.Struct(&res); err != nil {
--		return nil, ebzkratos.New(pb.ErrorServerError("fake: %v", err))
+-	must.True(id > 0)
 +	db := uc.data.DB()
-+
+ 
+-	res := &Article{}
+-	if err := uc.data.DB().WithContext(ctx).First(res, id).Error; err != nil {
 +	var record models.Record
 +	if err := db.WithContext(ctx).First(&record, id).Error; err != nil {
-+		if errors.Is(err, gorm.ErrRecordNotFound) {
+ 		if errors.Is(err, gorm.ErrRecordNotFound) {
+-			return nil, ebzkratos.New(pb.ErrorArticleNotFound("article %d not found", id))
 +			return nil, ebzkratos.New(pb.ErrorServerError("not found: %v", err))
-+		}
+ 		}
+-		return nil, ebzkratos.New(pb.ErrorDbError("get article: %v", err))
 +		return nil, ebzkratos.New(pb.ErrorServerError("db: %v", err))
  	}
--	return &res, nil
+-	return res, nil
 +
 +	return &Article{
 +		ID:    int64(record.ID),
@@ -324,6 +463,59 @@ Code differences compared to source project.
  }
  
  func (uc *ArticleUsecase) ListArticles(ctx context.Context, page int32, pageSize int32) ([]*Article, int32, *ebzkratos.Ebz) {
+-	if page < 1 {
+-		page = 1
+-	}
+-	if pageSize < 1 {
+-		pageSize = 10
+-	}
+-
+-	db := uc.data.DB().WithContext(ctx)
+-
+-	var total int64
+-	if err := db.Model(&Article{}).Count(&total).Error; err != nil {
+-		return nil, 0, ebzkratos.New(pb.ErrorDbError("count articles: %v", err))
+-	}
+-
+ 	var items []*Article
+-	if err := db.Order("id").Offset(int((page - 1) * pageSize)).Limit(int(pageSize)).Find(&items).Error; err != nil {
+-		return nil, 0, ebzkratos.New(pb.ErrorDbError("list articles: %v", err))
+-	}
+-	return items, int32(total), nil
++	gofakeit.Slice(&items)
++	return items, int32(len(items)), nil
+ }
+ 
+-// ListStudentArticles returns one student's articles, one page at a time. The
+-// student↔article relationship gets its own endpoint instead of overloading
+-// ListArticles with an extra flag.
+-//
+-// ListStudentArticles 分页返回某个学生的文章。学生↔文章这层关系单独开一个接口，
+-// 而不是往 ListArticles 上塞过滤参数。
+ func (uc *ArticleUsecase) ListStudentArticles(ctx context.Context, studentID int64, page int32, pageSize int32) ([]*Article, int32, *ebzkratos.Ebz) {
+-	must.True(studentID > 0)
+-	if page < 1 {
+-		page = 1
+-	}
+-	if pageSize < 1 {
+-		pageSize = 10
+-	}
+-
+-	db := uc.data.DB().WithContext(ctx)
+-
+-	var total int64
+-	if err := db.Model(&Article{}).Where("student_id = ?", studentID).Count(&total).Error; err != nil {
+-		return nil, 0, ebzkratos.New(pb.ErrorDbError("count student articles: %v", err))
+-	}
+-
+ 	var items []*Article
+-	if err := db.Where("student_id = ?", studentID).Order("id").Offset(int((page - 1) * pageSize)).Limit(int(pageSize)).Find(&items).Error; err != nil {
+-		return nil, 0, ebzkratos.New(pb.ErrorDbError("list student articles: %v", err))
+-	}
+-	return items, int32(total), nil
++	gofakeit.Slice(&items)
++	return items, int32(len(items)), nil
+ }
 ```
 
 ## internal/conf/conf.pb.go (+11 -2)
@@ -380,21 +572,26 @@ Code differences compared to source project.
  message Data {
 ```
 
-## internal/data/data.go (+25 -4)
+## internal/data/data.go (+27 -14)
 
 ```diff
-@@ -3,25 +3,46 @@
+@@ -1,35 +1,48 @@
+ package data
+ 
  import (
- 	"github.com/go-kratos/kratos/v2/log"
+-	"log/slog"
+-
  	"github.com/google/wire"
 +	"github.com/yylego/go-migrate/checkmigration"
  	"github.com/yylego/kratos-examples/demo2kratos/internal/conf"
 +	"github.com/yylego/kratos-examples/demo2kratos/internal/pkg/models"
  	"github.com/yylego/must"
  	"github.com/yylego/rese"
- 	"gorm.io/driver/sqlite"
+-	"gorm.io/driver/postgres"
++	"gorm.io/driver/sqlite"
  	"gorm.io/gorm"
 +	loggergorm "gorm.io/gorm/logger"
++	"log/slog"
  )
  
 +// ProviderSet is data providers.
@@ -405,10 +602,17 @@ Code differences compared to source project.
  	db *gorm.DB
  }
  
+-// DB exposes the underlying gorm handle so the biz code can run true queries.
+-//
+-// DB 暴露底层 gorm 句柄，供 biz 层执行真实的数据库读写
+-func (d *Data) DB() *gorm.DB {
+-	return d.db
+-}
+-
 +// NewData .
- func NewData(c *conf.Data, logger log.Logger) (*Data, func(), error) {
--	must.Same(c.Database.Driver, "sqlite3")
--	db := rese.P1(gorm.Open(sqlite.Open(c.Database.Source), &gorm.Config{}))
+ func NewData(c *conf.Data, logger *slog.Logger) (*Data, func(), error) {
+-	must.Same(c.Database.Driver, "postgres")
+-	db := rese.P1(gorm.Open(postgres.Open(c.Database.Source), &gorm.Config{}))
 +	dsn := must.Nice(c.Database.Source)
 +	db := rese.P1(gorm.Open(sqlite.Open(dsn), &gorm.Config{
 +		Logger: loggergorm.Default.LogMode(loggergorm.Info),
@@ -419,7 +623,7 @@ Code differences compared to source project.
 +	checkmigration.CheckMigrate(db, models.Objects())
 +
  	cleanup := func() {
- 		log.NewHelper(logger).Info("closing the data resources")
+ 		logger.Info("closing the data resources")
 -		_ = rese.P1(db.DB()).Close()
 +		must.Done(rese.P1(db.DB()).Close())
  	}
@@ -443,8 +647,8 @@ Code differences compared to source project.
 +package appcfg
 +
 +import (
-+	"github.com/go-kratos/kratos/v2/config"
-+	"github.com/go-kratos/kratos/v2/config/file"
++	"github.com/go-kratos/kratos/v3/config"
++	"github.com/go-kratos/kratos/v3/config/file"
 +	"github.com/yylego/kratos-examples/demo2kratos/internal/conf"
 +	"github.com/yylego/rese"
 +)

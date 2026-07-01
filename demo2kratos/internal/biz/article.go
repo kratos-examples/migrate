@@ -2,10 +2,10 @@ package biz
 
 import (
 	"context"
+	"log/slog"
 
 	"github.com/brianvoe/gofakeit/v7"
-	"github.com/go-kratos/kratos/v2/errors"
-	"github.com/go-kratos/kratos/v2/log"
+	"github.com/go-kratos/kratos/v3/errors"
 	"github.com/yylego/kratos-ebz/ebzkratos"
 	pb "github.com/yylego/kratos-examples/demo2kratos/api/article"
 	"github.com/yylego/kratos-examples/demo2kratos/internal/data"
@@ -22,11 +22,11 @@ type Article struct {
 
 type ArticleUsecase struct {
 	data *data.Data
-	log  *log.Helper
+	log  *slog.Logger
 }
 
-func NewArticleUsecase(data *data.Data, logger log.Logger) *ArticleUsecase {
-	return &ArticleUsecase{data: data, log: log.NewHelper(logger)}
+func NewArticleUsecase(data *data.Data, logger *slog.Logger) *ArticleUsecase {
+	return &ArticleUsecase{data: data, log: logger}
 }
 
 func (uc *ArticleUsecase) CreateArticle(ctx context.Context, a *Article) (*Article, *ebzkratos.Ebz) {
@@ -87,6 +87,12 @@ func (uc *ArticleUsecase) GetArticle(ctx context.Context, id int64) (*Article, *
 }
 
 func (uc *ArticleUsecase) ListArticles(ctx context.Context, page int32, pageSize int32) ([]*Article, int32, *ebzkratos.Ebz) {
+	var items []*Article
+	gofakeit.Slice(&items)
+	return items, int32(len(items)), nil
+}
+
+func (uc *ArticleUsecase) ListStudentArticles(ctx context.Context, studentID int64, page int32, pageSize int32) ([]*Article, int32, *ebzkratos.Ebz) {
 	var items []*Article
 	gofakeit.Slice(&items)
 	return items, int32(len(items)), nil

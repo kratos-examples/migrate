@@ -1,7 +1,6 @@
 package data
 
 import (
-	"github.com/go-kratos/kratos/v2/log"
 	"github.com/google/wire"
 	"github.com/yylego/go-migrate/checkmigration"
 	"github.com/yylego/kratos-examples/demo2kratos/internal/conf"
@@ -11,6 +10,7 @@ import (
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 	loggergorm "gorm.io/gorm/logger"
+	"log/slog"
 )
 
 // ProviderSet is data providers.
@@ -22,7 +22,7 @@ type Data struct {
 }
 
 // NewData .
-func NewData(c *conf.Data, logger log.Logger) (*Data, func(), error) {
+func NewData(c *conf.Data, logger *slog.Logger) (*Data, func(), error) {
 	dsn := must.Nice(c.Database.Source)
 	db := rese.P1(gorm.Open(sqlite.Open(dsn), &gorm.Config{
 		Logger: loggergorm.Default.LogMode(loggergorm.Info),
@@ -33,7 +33,7 @@ func NewData(c *conf.Data, logger log.Logger) (*Data, func(), error) {
 	checkmigration.CheckMigrate(db, models.Objects())
 
 	cleanup := func() {
-		log.NewHelper(logger).Info("closing the data resources")
+		logger.Info("closing the data resources")
 		must.Done(rese.P1(db.DB()).Close())
 	}
 	return &Data{

@@ -2,19 +2,22 @@
 
 ## Go 1.25+ Optimizations
 
-This project uses Go 1.25.0+ with built-in container-aware GOMAXPROCS feature. The `go.uber.org/automaxprocs` package has been removed since Go 1.25+ now:
+This project uses Go 1.25.0+ with built-in runtime-adaptive GOMAXPROCS feature. The `go.uber.org/automaxprocs` package has been removed since Go 1.25+ now:
 
-- Detects container CPU limits and quotas
-- Auto adjusts GOMAXPROCS to match container resources
-- Provides better performance in containerized environments without external dependencies
+- Recognizes CPU limits and quotas when the process runs inside containers
+- Auto adjusts GOMAXPROCS based on allocated CPU resources
+- Provides improved performance in containerized environments without outside dependencies
 
 See the [Go 1.25 release notes](https://tip.golang.org/doc/go1.25) to learn more.
 
 ## Install Kratos
+
 ```
 go install github.com/go-kratos/kratos/cmd/kratos/v2@latest
 ```
+
 ## Create a service
+
 ```
 # Create a template project
 kratos new server
@@ -31,7 +34,9 @@ go generate ./...
 go build -o ./bin/ ./...
 ./bin/server -conf ./configs
 ```
+
 ## Generate other auxiliary files by Makefile
+
 ```
 # Download and update dependencies
 make init
@@ -40,7 +45,9 @@ make api
 # Generate all files
 make all
 ```
+
 ## Automated Initialization (wire)
+
 ```
 # install wire
 go get github.com/google/wire/cmd/wire
@@ -51,6 +58,7 @@ wire
 ```
 
 ## Docker
+
 ```bash
 # build
 docker build -t <your-docker-image-name> .
@@ -59,3 +67,6 @@ docker build -t <your-docker-image-name> .
 docker run --rm -p 18000:18000 -p 19000:19000 -v </path/to/your/configs>:/data/conf <your-docker-image-name>
 ```
 
+## GitHub Stars
+
+[![Stargazers](https://starchart.cc/go-kratos/kratos.svg?variant=adaptive)](https://starchart.cc/go-kratos/kratos)

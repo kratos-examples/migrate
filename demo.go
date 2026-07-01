@@ -1,4 +1,4 @@
-// Package examples provides base and fork paths for comparing upstream source
+// Package examples provides base and fork paths to compare upstream source
 // with fork projects. Base paths come from Go module cache, fork paths from
 // the current workspace.
 //

@@ -4,7 +4,7 @@ package article
 
 import (
 	fmt "fmt"
-	errors "github.com/go-kratos/kratos/v2/errors"
+	errors "github.com/go-kratos/kratos/v3/errors"
 )
 
 // This is a compile-time assertion to ensure that this generated file

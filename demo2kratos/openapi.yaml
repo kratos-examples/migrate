@@ -104,6 +104,34 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/article.DeleteArticleReply'
+    /students/{studentId}/articles:
+        get:
+            tags:
+                - ArticleService
+            operationId: ArticleService_ListStudentArticles
+            parameters:
+                - name: studentId
+                  in: path
+                  required: true
+                  schema:
+                    type: string
+                - name: page
+                  in: query
+                  schema:
+                    type: integer
+                    format: int32
+                - name: pageSize
+                  in: query
+                  schema:
+                    type: integer
+                    format: int32
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/article.ListArticlesReply'
 components:
     schemas:
         article.ArticleInfo:

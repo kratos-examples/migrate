@@ -23,7 +23,7 @@
 
 **kratos-examples** 是使用 [Go-Kratos](https://go-kratos.dev) 框架构建微服务的最佳实践参考实现。它的作用是：
 
-- 🎯 **基础项目** - kratos-orz 生态系统中 15+ 专用演示项目的基础模板
+- 🎯 **基础项目** - kratos-orz 生态系统中 20+ 专用演示项目的基础模板
 - 🛠️ **工具链集成示例** - 展示 kratos-orz 开发工具的实践应用
 - 📚 **学习资源** - 完整的微服务架构，遵循 Kratos 规范
 - ⚡ **快速开发** - 通过 make orz 等魔法命令实现 proto 和代码自动同步
@@ -39,19 +39,131 @@
 
 **kratos-examples 在这个坚实的基础上**，添加了增强的工具链和自动化能力，简化开发工作流程。
 
+## 示例项目
+
+以下项目均基于 kratos-examples 进行 fork，分别展示不同的功能特性和集成方案，涵盖认证、配置、定时任务、数据库、日志、链路追踪、前端集成等多个方面：
+
+|    演示     |                      仓库                      |
+| :---------: | :--------------------------------------------: |
+|     ast     |     https://github.com/kratos-examples/ast     |
+| custom-auth | https://github.com/kratos-examples/custom-auth |
+| static-auth | https://github.com/kratos-examples/static-auth |
+|   config    |   https://github.com/kratos-examples/config    |
+|    cron     |    https://github.com/kratos-examples/cron     |
+|     ebz     |     https://github.com/kratos-examples/ebz     |
+|    cobra    |    https://github.com/kratos-examples/cobra    |
+|    gorm     |    https://github.com/kratos-examples/gorm     |
+|  gormzhcn   |  https://github.com/kratos-examples/gormzhcn   |
+|    cors     |    https://github.com/kratos-examples/cors     |
+|    i18n     |    https://github.com/kratos-examples/i18n     |
+|    nacos    |    https://github.com/kratos-examples/nacos    |
+| rate-limit  | https://github.com/kratos-examples/rate-limit  |
+|   swaggo    |   https://github.com/kratos-examples/swaggo    |
+|    trace    |    https://github.com/kratos-examples/trace    |
+|    test     |    https://github.com/kratos-examples/test     |
+|    vue3     |    https://github.com/kratos-examples/vue3     |
+|  vue3zhcn   |  https://github.com/kratos-examples/vue3zhcn   |
+|    wire     |    https://github.com/kratos-examples/wire     |
+|     zap     |     https://github.com/kratos-examples/zap     |
+|    zapzh    |    https://github.com/kratos-examples/zapzh    |
+|   migrate   |   https://github.com/kratos-examples/migrate   |
+|    ping     |    https://github.com/kratos-examples/ping     |
+| supervisord | https://github.com/kratos-examples/supervisord |
+
 ## 核心功能
 
-### 🚀 kratos-orz 工具链集成
+### 🛠️ 推荐工具链
 
-提供 kratos-orz 工具链：
+kratos-orz 生态提供一组专注的小工具。前几个面向 Kratos 与 proto 工作流，其余是通用的 Go 小工具。按需取用即可——每条命令各自独立（不编号，方便日后增减），多数 IDE 会在代码块上显示运行按钮，点一下即可安装，每个仓库链接里有完整文档。
 
-- **orzkratos-add-proto** - 简化向 Kratos 项目添加 proto 文件的过程
-- **orzkratos-srv-proto** - 自动同步服务实现与 proto 定义
+#### `orzkratos-add-proto`
 
-安装工具：
+在 api 目录下生成一个新的 proto 文件，新接口从准备好的骨架起步。
+
+仓库：https://github.com/yylego/kratos-orz
 
 ```bash
-make init
+go install github.com/yylego/kratos-orz/cmd/orzkratos-add-proto@latest
+```
+
+#### `orzkratos-srv-proto`
+
+让 service 代码与 proto 契约保持同步：补全方法框架、隐藏已删方法、按 proto 顺序重排。
+
+仓库：https://github.com/yylego/kratos-orz
+
+```bash
+go install github.com/yylego/kratos-orz/cmd/orzkratos-srv-proto@latest
+```
+
+#### `protoc-gen-orzkratos-errors`
+
+从 proto 枚举生成 Go 错误码辅助函数，带状态码和错误嵌套。
+
+仓库：https://github.com/yylego/kratos-errgen
+
+```bash
+go install github.com/yylego/kratos-errgen/cmd/protoc-gen-orzkratos-errors@latest
+```
+
+#### `wirekratos`
+
+在 Kratos 工作区模式下运行 Wire 依赖注入，带框架感知标识。
+
+仓库：https://github.com/yylego/kratos-wire
+
+```bash
+go install github.com/yylego/kratos-wire/cmd/wirekratos@latest
+```
+
+#### `clang-format-batch`
+
+一次性批量格式化 proto 和 cpp 源码。
+
+仓库：https://github.com/yylego/clang-format
+
+```bash
+go install github.com/yylego/clang-format/cmd/clang-format-batch@latest
+```
+
+#### `depbump`
+
+一次性升级模块依赖，需要时可覆盖整个工作区。
+
+仓库：https://github.com/yylego/depbump
+
+```bash
+go install github.com/yylego/depbump/cmd/depbump@latest
+```
+
+#### `go-lint`
+
+封装 golangci-lint 并自动格式化，跨模块运行格式化与静态检查。
+
+仓库：https://github.com/yylego/go-lint
+
+```bash
+go install github.com/yylego/go-lint/cmd/go-lint@latest
+```
+
+#### `go-commit`
+
+自动化 git 提交，内置 Go 代码格式化。
+
+仓库：https://github.com/yylego/go-commit
+
+```bash
+go install github.com/yylego/go-commit/cmd/go-commit@latest
+```
+
+#### `tago`
+
+管理 git 标签并语义化自增，也处理带路径前缀的子模块标签。
+
+仓库：https://github.com/yylego/tago
+
+```bash
+go install github.com/yylego/tago/cmd/tago@latest
 ```
 
 ### ⚡ 魔法命令：`make orz`
@@ -75,28 +187,13 @@ make orz
 3. 服务自动生成 `CreateArticle` 方法框架
 4. 实现业务逻辑
 
-### 🔀 Fork 项目同步
+## 升级与同步思路
 
-提供完整的自动化工作流，用于同步 fork 项目与上游变更。
+本项目是多模块仓库：一个根模块加两个子模块（`demo1kratos`、`demo2kratos`）。根模块引用子模块，所以发布分两轮——先给子模块打标签（带路径前缀，如 `demo1kratos/v0.0.X`），再把根模块升级到子模块的新版本并给根模块打标签（`v0.0.X`）。
 
-通过 `make merge-stepN` 系列命令，自动处理上游代码合并、冲突解决、依赖升级、测试验证等流程。
+下游 fork 项目各自专注一个功能（trace、gorm、zap、i18n 等），按固定节奏从本上游同步：合并上游 main、升级依赖、重新生成代码，然后测试与代码检查。Fork 不会合并回上游——每个都作为独立示例长期存在，持续拉取上游变更以保持与最新 Kratos 版本对齐。
 
-详细工作流程和使用说明请查看 [Makefile](./Makefile)。
-
-## 项目结构
-
-### 演示项目
-
-提供两个演示项目，展示各种功能的使用：
-
-- [demo1kratos](./demo1kratos) - Student CRUD 微服务（Kratos 简单示例）
-- [demo2kratos](./demo2kratos) - Article CRUD 微服务（高级功能和集成）
-
-两个演示都遵循标准的 Kratos 项目结构，采用 proto-first 设计、Wire 依赖注入、gRPC/HTTP 双协议端点。
-
-我们提供 Demo1（基准）和 Demo2（fork）的代码比较，突出显示改动的代码块。
-
-当此项目被 fork 时，你也可以将其与源项目进行比较，查看差异。
+上面的工具正好对应各个环节：`depbump` 管依赖、`tago` 管标签、`go-lint` 管格式化与检查。具体顺序最好一步一步来、不写死成脚本，这样流程能随具体情况灵活调整。
 
 ### 代码变更
 
@@ -104,7 +201,7 @@ make orz
 
 - [changes/demo1.md](./changes/demo1.md) - Demo1 相对源项目的变更
 - [changes/demo2.md](./changes/demo2.md) - Demo2 相对源项目的变更
-- [changes/aside.md](changes/aside.md) - 附属模块和兄弟项目
+- [changes/aside.md](./changes/aside.md) - 附属模块和兄弟项目
 
 这些文件通过测试自动生成：
 
@@ -118,31 +215,27 @@ go test -v -run TestGenerateAsideChanges # 生成 aside.md
 
 **在 fork 项目中：** 文件显示代码差异并带语法高亮，简单直观地在 GitHub 上查看定制化的改动。
 
-## Fork 项目列表
+## 项目结构
 
-|    演示     |                      仓库                      |
-| :---------: | :--------------------------------------------: |
-|     ast     |     https://github.com/kratos-examples/ast     |
-| custom-auth | https://github.com/kratos-examples/custom-auth |
-| static-auth | https://github.com/kratos-examples/static-auth |
-|   config    |   https://github.com/kratos-examples/config    |
-|    cron     |    https://github.com/kratos-examples/cron     |
-|     ebz     |     https://github.com/kratos-examples/ebz     |
-|    cobra    |    https://github.com/kratos-examples/cobra    |
-|    gorm     |    https://github.com/kratos-examples/gorm     |
-|    cors     |    https://github.com/kratos-examples/cors     |
-|    i18n     |    https://github.com/kratos-examples/i18n     |
-|    nacos    |    https://github.com/kratos-examples/nacos    |
-|   swaggo    |   https://github.com/kratos-examples/swaggo    |
-|    trace    |    https://github.com/kratos-examples/trace    |
-|    test     |    https://github.com/kratos-examples/test     |
-|    vue3     |    https://github.com/kratos-examples/vue3     |
-|    wire     |    https://github.com/kratos-examples/wire     |
-|     zap     |     https://github.com/kratos-examples/zap     |
-|    zapzh    |    https://github.com/kratos-examples/zapzh    |
-|   migrate   |   https://github.com/kratos-examples/migrate   |
-|    ping     |    https://github.com/kratos-examples/ping     |
-| supervisord | https://github.com/kratos-examples/supervisord |
+### 内置演示
+
+提供两个内置演示项目，展示各种功能的使用：
+
+- [demo1kratos](./demo1kratos) - Student CRUD 微服务（Kratos 简单示例）
+- [demo2kratos](./demo2kratos) - Article CRUD 微服务（高级功能和集成）
+
+两个演示都遵循标准的 Kratos 项目结构，采用 proto-first 设计、Wire 依赖注入、gRPC/HTTP 双协议端点。
+
+### 参数校验
+
+项目演示了双层校验模式：
+
+- **Service 层** - 返回 `ErrorBadParam`（HTTP 400）提示客户端输入无效，给予可操作的反馈
+- **Biz 层** - 使用 `must` 断言（失败时 panic）作为安全兜底。由于 Service 层已经做过校验，Biz 层只是冗余检查，因此采用简单的断言而非返回详细错误。这也确保了 Biz 模块自身的安全性——即使其他调用方在新的场景中复用该模块时忘记校验参数，断言也能及时捕获问题。相比在代码中到处散布防御性检查，在入口处用断言直接拒绝非法参数，让后续的业务逻辑保持简洁和确定性
+
+### 数据层
+
+两个演示通过 GORM 使用同一个 PostgreSQL 数据库。
 
 <!-- TEMPLATE (ZH) BEGIN: STANDARD PROJECT FOOTER -->
 <!-- VERSION 2025-11-25 03:52:28.131064 +0000 UTC -->

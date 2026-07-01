@@ -38,6 +38,12 @@ service ArticleService {
       get: "/articles"
     };
   }
+
+  rpc ListStudentArticles(ListStudentArticlesRequest) returns (ListArticlesReply) {
+    option (google.api.http) = {
+      get: "/students/{student_id}/articles"
+    };
+  }
 }
 
 message ArticleInfo {
@@ -87,6 +93,12 @@ message GetArticleReply {
 message ListArticlesRequest {
   int32 page = 1;
   int32 page_size = 2;
+}
+
+message ListStudentArticlesRequest {
+  int64 student_id = 1;
+  int32 page = 2;
+  int32 page_size = 3;
 }
 
 message ListArticlesReply {

@@ -1,7 +1,8 @@
 package subcmds
 
 import (
-	"github.com/go-kratos/kratos/v2/log"
+	"log/slog"
+
 	"github.com/golang-migrate/migrate/v4"
 	sqlite3migrate "github.com/golang-migrate/migrate/v4/database/sqlite3"
 	"github.com/spf13/cobra"
@@ -22,13 +23,12 @@ import (
 
 // NewVersionCmd creates version command
 // 创建版本命令
-func NewVersionCmd(serviceName, version string, logger log.Logger) *cobra.Command {
+func NewVersionCmd(serviceName, version string, logger *slog.Logger) *cobra.Command {
 	return &cobra.Command{
 		Use:   "version",
 		Short: "Print version info",
 		Run: func(cmd *cobra.Command, args []string) {
-			slog := log.NewHelper(logger)
-			slog.Infof("service-name: %s version: %s", serviceName, version)
+			logger.Info("version info", "service-name", serviceName, "version", version)
 		},
 	}
 }
@@ -66,7 +66,7 @@ func NewVersionCmd(serviceName, version string, logger log.Logger) *cobra.Comman
 // Note: Use caution with rollback operations to avoid unintended destructive actions
 // 注意: 回退操作要谨慎，避免误操作导致问题
 // ./bin/demo1kratos migrate migrate dec (use with caution)
-func NewMigrateCmd(logger log.Logger) *cobra.Command {
+func NewMigrateCmd(logger *slog.Logger) *cobra.Command {
 	var debugMode bool
 
 	var rootCmd = &cobra.Command{

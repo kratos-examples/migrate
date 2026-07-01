@@ -1,7 +1,7 @@
-// Package examples_test compares base (upstream cache) and fork (local) code
+// Package examples_test compares base (upstream cache) and fork (workspace) code
 // Contains test functions to show, compare, and generate difference reports
 //
-// examples_test 比较基准（上游缓存）和 fork（本地）代码的差异
+// examples_test 比较基准（上游缓存）和 fork（工作区）代码的差异
 // 包含显示、比较和生成差异报告的测试函数
 package examples_test
 
