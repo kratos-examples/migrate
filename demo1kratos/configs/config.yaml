@@ -5,8 +5,7 @@ server:
   grpc:
     address: 0.0.0.0:9001
     timeout: 1s
-  auto_run: true
 data:
   database:
-    driver: sqlite
-    source: ./bin/demo1kratos.db
+    driver: postgres
+    source: host=localhost port=5432 user=postgres password=123 dbname=kratos_examples_db sslmode=disable

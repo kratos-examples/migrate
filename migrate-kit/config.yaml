@@ -1,0 +1,10 @@
+# migrate-kit config: the shared postgres database plus the migration scripts path.
+# Passing --conf=/path/to/other.yaml makes migrate-kit read that file instead.
+#
+# migrate-kit 配置：与两个服务共用的 postgres 库 + 迁移脚本目录。
+# 传 --conf=/别的路径.yaml 就改读你指定的那个文件。
+database:
+  driver: postgres
+  source: host=localhost port=5432 user=postgres password=123 dbname=kratos_examples_db sslmode=disable
+scripts:
+  path: ./scripts

@@ -28,7 +28,11 @@ func wireApp(confServer *conf.Server, confData *conf.Data, logger *slog.Logger) 
 	if err != nil {
 		return nil, nil, err
 	}
-	studentUsecase := biz.NewStudentUsecase(dataData, logger)
+	studentUsecase, err := biz.NewStudentUsecase(dataData, logger)
+	if err != nil {
+		cleanup()
+		return nil, nil, err
+	}
 	studentService := service.NewStudentService(studentUsecase)
 	grpcServer := server.NewGRPCServer(confServer, studentService, logger)
 	httpServer := server.NewHTTPServer(confServer, studentService, logger)

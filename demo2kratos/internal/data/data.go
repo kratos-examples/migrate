@@ -1,48 +1,35 @@
 package data
 
 import (
+	"log/slog"
+
 	"github.com/google/wire"
-	"github.com/yylego/go-migrate/checkmigration"
 	"github.com/yylego/kratos-examples/demo2kratos/internal/conf"
-	"github.com/yylego/kratos-examples/demo2kratos/internal/pkg/models"
 	"github.com/yylego/must"
 	"github.com/yylego/rese"
-	"gorm.io/driver/sqlite"
+	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
-	loggergorm "gorm.io/gorm/logger"
-	"log/slog"
 )
 
-// ProviderSet is data providers.
 var ProviderSet = wire.NewSet(NewData)
 
-// Data .
 type Data struct {
 	db *gorm.DB
 }
 
-// NewData .
-func NewData(c *conf.Data, logger *slog.Logger) (*Data, func(), error) {
-	dsn := must.Nice(c.Database.Source)
-	db := rese.P1(gorm.Open(sqlite.Open(dsn), &gorm.Config{
-		Logger: loggergorm.Default.LogMode(loggergorm.Info),
-	}))
-
-	// Check if migration scripts are missing
-	// 检查是否缺少迁移脚本
-	checkmigration.CheckMigrate(db, models.Objects())
-
-	cleanup := func() {
-		logger.Info("closing the data resources")
-		must.Done(rese.P1(db.DB()).Close())
-	}
-	return &Data{
-		db: db,
-	}, cleanup, nil
-}
-
-// DB returns the gorm database instance
-// 返回 gorm 数据库实例
+// DB exposes the underlying gorm handle so the biz code can run true queries.
+//
+// DB 暴露底层 gorm 句柄，供 biz 层执行真实的数据库读写
 func (d *Data) DB() *gorm.DB {
 	return d.db
+}
+
+func NewData(c *conf.Data, logger *slog.Logger) (*Data, func(), error) {
+	must.Same(c.Database.Driver, "postgres")
+	db := rese.P1(gorm.Open(postgres.Open(c.Database.Source), &gorm.Config{}))
+	cleanup := func() {
+		logger.Info("closing the data resources")
+		_ = rese.P1(db.DB()).Close()
+	}
+	return &Data{db: db}, cleanup, nil
 }
