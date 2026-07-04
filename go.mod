@@ -4,8 +4,8 @@ go 1.25.0
 
 require (
 	github.com/yylego/kratos-compare v0.0.5
-	github.com/yylego/kratos-examples/demo1kratos v0.0.5
-	github.com/yylego/kratos-examples/demo2kratos v0.0.5
+	github.com/yylego/kratos-examples/demo1kratos v0.0.6
+	github.com/yylego/kratos-examples/demo2kratos v0.0.6
 	github.com/yylego/osexistpath v0.0.0
 	github.com/yylego/runpath v0.0.7
 )

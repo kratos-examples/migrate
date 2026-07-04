@@ -73,6 +73,12 @@ func (s *StudentService) GetStudent(ctx context.Context, req *pb.GetStudentReque
 }
 
 func (s *StudentService) ListStudents(ctx context.Context, req *pb.ListStudentsRequest) (*pb.ListStudentsReply, error) {
+	if req.Page < 1 {
+		return nil, pb.ErrorBadParam("PAGE MUST BE POSITIVE")
+	}
+	if req.PageSize < 1 {
+		return nil, pb.ErrorBadParam("PAGE_SIZE MUST BE POSITIVE")
+	}
 	students, count, ebz := s.uc.ListStudents(ctx, req.Page, req.PageSize)
 	if ebz != nil {
 		return nil, ebz.Erk

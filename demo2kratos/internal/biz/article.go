@@ -152,17 +152,13 @@ func (uc *ArticleUsecase) GetArticle(ctx context.Context, id int64) (*Article, *
 }
 
 func (uc *ArticleUsecase) ListArticles(ctx context.Context, page int32, pageSize int32) ([]*Article, int32, *ebzkratos.Ebz) {
-	if page < 1 {
-		page = 1
-	}
-	if pageSize < 1 {
-		pageSize = 10
-	}
+	must.True(page >= 1)
+	must.True(pageSize >= 1)
 
 	db := uc.data.DB().WithContext(ctx)
 
-	var total int64
-	if err := db.Model(&Article{}).Count(&total).Error; err != nil {
+	var count int64
+	if err := db.Model(&Article{}).Count(&count).Error; err != nil {
 		return nil, 0, ebzkratos.New(pb.ErrorDbError("count articles: %v", err))
 	}
 
@@ -170,7 +166,7 @@ func (uc *ArticleUsecase) ListArticles(ctx context.Context, page int32, pageSize
 	if err := db.Order("id").Offset(int((page - 1) * pageSize)).Limit(int(pageSize)).Find(&items).Error; err != nil {
 		return nil, 0, ebzkratos.New(pb.ErrorDbError("list articles: %v", err))
 	}
-	return items, int32(total), nil
+	return items, int32(count), nil
 }
 
 // ListStudentArticles returns one student's articles, one page at a time. The
@@ -181,17 +177,13 @@ func (uc *ArticleUsecase) ListArticles(ctx context.Context, page int32, pageSize
 // 而不是往 ListArticles 上塞过滤参数。
 func (uc *ArticleUsecase) ListStudentArticles(ctx context.Context, studentID int64, page int32, pageSize int32) ([]*Article, int32, *ebzkratos.Ebz) {
 	must.True(studentID > 0)
-	if page < 1 {
-		page = 1
-	}
-	if pageSize < 1 {
-		pageSize = 10
-	}
+	must.True(page >= 1)
+	must.True(pageSize >= 1)
 
 	db := uc.data.DB().WithContext(ctx)
 
-	var total int64
-	if err := db.Model(&Article{}).Where("student_id = ?", studentID).Count(&total).Error; err != nil {
+	var count int64
+	if err := db.Model(&Article{}).Where("student_id = ?", studentID).Count(&count).Error; err != nil {
 		return nil, 0, ebzkratos.New(pb.ErrorDbError("count student articles: %v", err))
 	}
 
@@ -199,5 +191,5 @@ func (uc *ArticleUsecase) ListStudentArticles(ctx context.Context, studentID int
 	if err := db.Where("student_id = ?", studentID).Order("id").Offset(int((page - 1) * pageSize)).Limit(int(pageSize)).Find(&items).Error; err != nil {
 		return nil, 0, ebzkratos.New(pb.ErrorDbError("list student articles: %v", err))
 	}
-	return items, int32(total), nil
+	return items, int32(count), nil
 }

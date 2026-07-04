@@ -79,6 +79,12 @@ func (s *ArticleService) GetArticle(ctx context.Context, req *pb.GetArticleReque
 }
 
 func (s *ArticleService) ListArticles(ctx context.Context, req *pb.ListArticlesRequest) (*pb.ListArticlesReply, error) {
+	if req.Page < 1 {
+		return nil, pb.ErrorBadParam("PAGE MUST BE POSITIVE")
+	}
+	if req.PageSize < 1 {
+		return nil, pb.ErrorBadParam("PAGE_SIZE MUST BE POSITIVE")
+	}
 	articles, count, ebz := s.uc.ListArticles(ctx, req.Page, req.PageSize)
 	if ebz != nil {
 		return nil, ebz.Erk
@@ -93,6 +99,12 @@ func (s *ArticleService) ListArticles(ctx context.Context, req *pb.ListArticlesR
 func (s *ArticleService) ListStudentArticles(ctx context.Context, req *pb.ListStudentArticlesRequest) (*pb.ListArticlesReply, error) {
 	if req.StudentId <= 0 {
 		return nil, pb.ErrorBadParam("STUDENT_ID IS REQUIRED")
+	}
+	if req.Page < 1 {
+		return nil, pb.ErrorBadParam("PAGE MUST BE POSITIVE")
+	}
+	if req.PageSize < 1 {
+		return nil, pb.ErrorBadParam("PAGE_SIZE MUST BE POSITIVE")
 	}
 	articles, count, ebz := s.uc.ListStudentArticles(ctx, req.StudentId, req.Page, req.PageSize)
 	if ebz != nil {

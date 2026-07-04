@@ -139,17 +139,13 @@ func (uc *StudentUsecase) GetStudent(ctx context.Context, id int64) (*Student, *
 }
 
 func (uc *StudentUsecase) ListStudents(ctx context.Context, page int32, pageSize int32) ([]*Student, int32, *ebzkratos.Ebz) {
-	if page < 1 {
-		page = 1
-	}
-	if pageSize < 1 {
-		pageSize = 10
-	}
+	must.True(page >= 1)
+	must.True(pageSize >= 1)
 
 	db := uc.data.DB().WithContext(ctx)
 
-	var total int64
-	if err := db.Model(&Student{}).Count(&total).Error; err != nil {
+	var count int64
+	if err := db.Model(&Student{}).Count(&count).Error; err != nil {
 		return nil, 0, ebzkratos.New(pb.ErrorDbError("count students: %v", err))
 	}
 
@@ -157,5 +153,5 @@ func (uc *StudentUsecase) ListStudents(ctx context.Context, page int32, pageSize
 	if err := db.Order("id").Offset(int((page - 1) * pageSize)).Limit(int(pageSize)).Find(&items).Error; err != nil {
 		return nil, 0, ebzkratos.New(pb.ErrorDbError("list students: %v", err))
 	}
-	return items, int32(total), nil
+	return items, int32(count), nil
 }
