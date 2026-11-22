@@ -46,7 +46,11 @@ func NewArticleUsecase(data *data.Data, logger *slog.Logger) (*ArticleUsecase, e
 	// if err := data.DB().AutoMigrate(&Article{}, &Student{}); err != nil {
 	// 	return nil, err
 	// }
-	must.Length(checkmigration.CheckMigrate(data.DB(), []any{&Article{}, &Student{}}), 0)
+	pending, err := checkmigration.CheckMigrate(data.DB(), []any{&Article{}, &Student{}})
+	if err != nil {
+		return nil, err
+	}
+	must.Length(pending, 0)
 	return &ArticleUsecase{data: data, slog: logger}, nil
 }
 

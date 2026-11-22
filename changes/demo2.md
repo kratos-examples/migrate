@@ -2,7 +2,7 @@
 
 Code differences compared to source project.
 
-## internal/biz/article.go (+13 -6)
+## internal/biz/article.go (+15 -4)
 
 ```diff
 @@ -5,6 +5,7 @@
@@ -13,7 +13,7 @@ Code differences compared to source project.
  	"github.com/yylego/kratos-ebz/ebzkratos"
  	pb "github.com/yylego/kratos-examples/demo2kratos/api/article"
  	"github.com/yylego/kratos-examples/demo2kratos/internal/data"
-@@ -34,12 +35,18 @@
+@@ -34,12 +35,22 @@
  }
  
  func NewArticleUsecase(data *data.Data, logger *slog.Logger) (*ArticleUsecase, error) {
@@ -21,8 +21,6 @@ Code differences compared to source project.
 -	// existence check); both services share one database
 -	// 建好本服务拥有的 articles 表，外加镜像的 students 表（供存在性校验用）
 -	if err := data.DB().AutoMigrate(&Article{}, &Student{}); err != nil {
--		return nil, err
--	}
 +	// AutoMigrate is disabled on purpose: the schema comes from the sibling migrate-kit
 +	// project via hand-written go-migrate scripts. Here we just check that the live
 +	// schema matches the models and crash fast when a migration is pending, since the
@@ -34,7 +32,11 @@ Code differences compared to source project.
 +	// if err := data.DB().AutoMigrate(&Article{}, &Student{}); err != nil {
 +	// 	return nil, err
 +	// }
-+	must.Length(checkmigration.CheckMigrate(data.DB(), []any{&Article{}, &Student{}}), 0)
++	pending, err := checkmigration.CheckMigrate(data.DB(), []any{&Article{}, &Student{}})
++	if err != nil {
+ 		return nil, err
+ 	}
++	must.Length(pending, 0)
  	return &ArticleUsecase{data: data, slog: logger}, nil
  }
  

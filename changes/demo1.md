@@ -2,7 +2,7 @@
 
 Code differences compared to source project.
 
-## internal/biz/student.go (+13 -5)
+## internal/biz/student.go (+15 -3)
 
 ```diff
 @@ -5,6 +5,7 @@
@@ -13,15 +13,13 @@ Code differences compared to source project.
  	"github.com/yylego/kratos-ebz/ebzkratos"
  	pb "github.com/yylego/kratos-examples/demo1kratos/api/student"
  	"github.com/yylego/kratos-examples/demo1kratos/internal/data"
-@@ -34,11 +35,18 @@
+@@ -34,11 +35,22 @@
  }
  
  func NewStudentUsecase(data *data.Data, logger *slog.Logger) (*StudentUsecase, error) {
 -	// Share one database with the article service: keep both tables in sync here
 -	// 与文章服务共用一个库：在这里把两张表都建好
 -	if err := data.DB().AutoMigrate(&Student{}, &Article{}); err != nil {
--		return nil, err
--	}
 +	// AutoMigrate is disabled on purpose: the schema comes from the sibling migrate-kit
 +	// project via hand-written go-migrate scripts. Here we just check that the live
 +	// schema matches the models and crash fast when a migration is pending, since the
@@ -33,7 +31,11 @@ Code differences compared to source project.
 +	// if err := data.DB().AutoMigrate(&Student{}, &Article{}); err != nil {
 +	// 	return nil, err
 +	// }
-+	must.Length(checkmigration.CheckMigrate(data.DB(), []any{&Student{}, &Article{}}), 0)
++	pending, err := checkmigration.CheckMigrate(data.DB(), []any{&Student{}, &Article{}})
++	if err != nil {
+ 		return nil, err
+ 	}
++	must.Length(pending, 0)
  	return &StudentUsecase{data: data, slog: logger}, nil
  }
  

@@ -101,11 +101,11 @@ func main() {
 	rootCmd.PersistentFlags().BoolVar(&debugMode, "debug", false, "enable debug mode")
 	rootCmd.PersistentFlags().String("conf", "", "config file path (default: the config.yaml next to this program)")
 
-	// migrate all: run every pending step forward
+	// migrate batch: run every pending step forward
 	// migrate inc: step one forward
 	// migrate dec: step one back
 	//
-	// migrate all：向前跑完所有待迁移步骤
+	// migrate batch：向前跑完所有待迁移步骤
 	// migrate inc：向前走一步
 	// migrate dec：向后退一步
 	rootCmd.AddCommand(cobramigration.NewMigrateCmd(param))

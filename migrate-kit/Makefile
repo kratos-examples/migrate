@@ -3,7 +3,7 @@
 # run each pending migration
 # 向前跑完所有待执行的迁移
 all:
-	go run . migrate all
+	go run . migrate batch
 
 # step one migration forward
 # 向前迁移一步
