@@ -18,12 +18,12 @@ cd migrate-kit && tree --noreport
 
 ```
 .
+|-- Makefile
+|-- README.md
 |-- config.yaml
 |-- go.mod
 |-- go.sum
 |-- main.go
-|-- Makefile
-|-- README.md
 `-- scripts
     |-- 000001_create_tables.down.sql
     `-- 000001_create_tables.up.sql
